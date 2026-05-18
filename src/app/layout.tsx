@@ -27,20 +27,13 @@ const fontCode = FontCode({
   variable: "--font-code",
 });
 
-// Metadata — include empty icons to prevent Next from emitting a favicon.
-
-// Ensure no favicon is emitted. Next will otherwise try to include /favicon.ico
-// or other static icons. Setting `icons.icon` to an empty array prevents Next
-// from adding a favicon to the generated <head> so the browser tab won't show
-// a site icon (note: browsers may still show a cached icon until you hard
-// refresh / clear cache).
+// Metadata — Configure logo.svg as the browser tab favicon.
 export const metadata: Metadata = {
   title: "Info Stream AI",
   description: "AI-powered study assistant",
   icons: {
-    // empty array intentionally removes any icon entries
-    icon: [],
-    apple: [],
+    icon: "/logo.svg",
+    apple: "/logo.svg",
   },
 };
 
@@ -48,9 +41,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     // The html/body wrapper is required by Next App Router pages
     <html lang="en" suppressHydrationWarning>
-      {/* Explicit blank favicon to override any injected favicon (data: URL is an empty image) */}
+      {/* Explicitly serve scalable vector logo.svg as the browser tab favicon */}
       <head>
-        <link rel="icon" href="data:," />
+        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
       </head>
       <body
         className={cn(
