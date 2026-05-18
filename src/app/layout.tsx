@@ -32,8 +32,8 @@ export const metadata: Metadata = {
   title: "Info Stream AI",
   description: "AI-powered study assistant",
   icons: {
-    icon: "/logo.svg",
-    apple: "/logo.svg",
+    icon: "/logo_circular.svg",
+    apple: "/logo_circular.svg",
   },
 };
 
@@ -41,9 +41,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     // The html/body wrapper is required by Next App Router pages
     <html lang="en" suppressHydrationWarning>
-      {/* Explicitly serve scalable vector logo.svg as the browser tab favicon */}
+      {/* Explicitly serve scalable vector logo_circular.svg as the browser tab favicon */}
       <head>
-        <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+        <link rel="icon" href="/logo_circular.svg" type="image/svg+xml" />
       </head>
       <body
         className={cn(
