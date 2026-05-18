@@ -66,8 +66,12 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
     setError(null);
     const client_id = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
     
-    // If no client ID is set, immediately open the premium secure manual connector!
-    if (!client_id || client_id === "your-google-client-id") {
+    // Log for debugging convenience
+    console.log("[Info Stream AI] Google Client ID loaded:", client_id);
+    
+    // If no client ID is set, or is placeholder, immediately open the manual connector modal!
+    if (!client_id || client_id === "your-google-client-id" || client_id.includes("your-")) {
+      console.log("[Info Stream AI] No Google Client ID configured. Opening secure manual connector fallback.");
       setShowGoogleModal(true);
       return;
     }
@@ -90,12 +94,22 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
             }
           }
         });
-        googleAuth.prompt();
+        
+        // Trigger Google prompt with active display verification
+        googleAuth.prompt((notification: any) => {
+          console.log("[Info Stream AI] Google prompt notification received:", notification);
+          // If the prompt was blocked, skipped, or not displayed (due to unauthorized domains/cookies/ID)
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            console.warn("[Info Stream AI] Google native prompt was skipped/blocked. Displaying manual fallback connector.");
+            setShowGoogleModal(true);
+          }
+        });
       } else {
+        console.warn("[Info Stream AI] Google SDK not found on window. Opening manual fallback connector.");
         setShowGoogleModal(true);
       }
     } catch (err) {
-      console.warn("Failed to load Google script prompt. Using secure manual verification connector.");
+      console.error("[Info Stream AI] Google prompt error. Fallback activated:", err);
       setShowGoogleModal(true);
     }
   };
