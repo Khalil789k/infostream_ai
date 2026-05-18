@@ -3,13 +3,18 @@
  */
 
 export function getApiUrl(): string {
+  // Always prioritize the environment variable in both Server-Side and Client-Side contexts
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  
   if (typeof window !== 'undefined') {
     const hostname = window.location.hostname;
     if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
       return `http://${hostname}:5000`;
     }
   }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+  return 'http://localhost:5000';
 }
 
 export function getAuthToken(): string | null {
