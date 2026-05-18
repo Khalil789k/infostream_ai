@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <!-- Premium circular background using your main brand theme color -->
-  <circle cx="256" cy="256" r="250" fill="#093464" />
+  <!-- Crisp white circular background to make your deep-blue logo pop beautifully -->
+  <circle cx="256" cy="256" r="250" fill="#ffffff" />
   
   <!-- Centered and scaled-down logo to make it look clean and well-padded -->
   <image href="/logo.svg" x="106" y="106" width="300" height="300" />
