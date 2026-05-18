@@ -43,3 +43,12 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# local deployment credentials and heavy test assets
+deploy_to_hf.sh
+test_video/
+*.db
+*.log
+backend/venv/
+backend/ai_models/
+backend/nltk_data/

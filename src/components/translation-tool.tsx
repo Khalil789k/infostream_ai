@@ -6,31 +6,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
-import { Skeleton } from "./ui/skeleton";
 
-// Mock server action
-const translateText = async (input: { text: string, targetLanguage: string }): Promise<{ translatedText: string }> => {
-  console.log(`Translating to ${input.targetLanguage}:`, input.text.substring(0, 50) + "...");
-  await new Promise(resolve => setTimeout(resolve, 1000));
-  return {
-    translatedText: `This is a mock translation of the content into ${input.targetLanguage}. In a real application, an AI model would provide an accurate translation.`
-  };
-};
+import { translateText as apiTranslateText } from '@/lib/api';
 
 const languages = [
-  { value: "Spanish", label: "Spanish" },
-  { value: "French", label: "French" },
-  { value: "German", label: "German" },
-  { value: "Chinese", label: "Chinese" },
-  { value: "Japanese", label: "Japanese" },
-  { value: "Russian", label: "Russian" },
-  { value: "Arabic", label: "Arabic" },
+  { value: "Urdu", label: "Urdu" },
 ];
 
 
-export function TranslationTool({ textToTranslate }: { textToTranslate: string }) {
-  const [targetLanguage, setTargetLanguage] = useState('');
-  const [translatedText, setTranslatedText] = useState('');
+export function TranslationTool({ 
+  textToTranslate, 
+  documentId,
+  initialTranslatedText = ''
+}: { 
+  textToTranslate: string;
+  documentId?: string;
+  initialTranslatedText?: string;
+}) {
+  const [targetLanguage, setTargetLanguage] = useState(initialTranslatedText ? 'Urdu' : '');
+  const [translatedText, setTranslatedText] = useState(initialTranslatedText);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -46,8 +40,14 @@ export function TranslationTool({ textToTranslate }: { textToTranslate: string }
     setIsLoading(true);
     setTranslatedText('');
     try {
-      const result = await translateText({ text: textToTranslate, targetLanguage });
+      // Pass documentId to update existing document instead of creating new one
+      const result = await apiTranslateText(textToTranslate, targetLanguage, documentId);
       setTranslatedText(result.translatedText);
+      toast({
+        variant: "default",
+        title: "Translation Saved",
+        description: "Translation has been saved to your session.",
+      });
     } catch (error) {
       console.error(error);
       toast({
@@ -61,7 +61,7 @@ export function TranslationTool({ textToTranslate }: { textToTranslate: string }
   };
 
   return (
-    <Card>
+    <Card className="border-2 border-gray-500 shadow-xl bg-white">
       <CardHeader>
         <CardTitle>Translate Content</CardTitle>
         <CardDescription>Translate the material into another language.</CardDescription>
@@ -83,17 +83,18 @@ export function TranslationTool({ textToTranslate }: { textToTranslate: string }
           </Button>
         </div>
         {(isLoading || translatedText) && (
-          <Card className="bg-muted/50">
+          <Card className="bg-gray-50 border-2 border-gray-400 shadow-md">
             <CardHeader>
                 <CardTitle>Translation to {targetLanguage}</CardTitle>
             </CardHeader>
             <CardContent>
                 <ScrollArea className="h-80">
                     {isLoading ? (
-                        <div className="space-y-2">
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-full" />
-                            <Skeleton className="h-4 w-3/4" />
+                        <div className="flex items-center justify-center h-full">
+                            <div className="flex flex-col items-center gap-3">
+                                <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                <p className="text-sm text-gray-600">Translating...</p>
+                            </div>
                         </div>
                     ) : (
                         <p className="whitespace-pre-wrap font-serif text-lg">{translatedText}</p>
