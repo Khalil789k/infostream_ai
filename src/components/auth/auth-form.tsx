@@ -175,90 +175,42 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
                   </button>
                 </div>
 
-                {!showCustomGoogleForm ? (
+                <form onSubmit={handleCustomGoogleSubmit} className="space-y-4">
+                  <p className="text-sm text-gray-600 mb-2">
+                    Enter your Google Account email to securely authenticate with <strong className="text-gray-900">Info Stream AI</strong>.
+                  </p>
+
                   <div>
-                    <p className="text-sm text-gray-600 mb-6">
-                      Choose an account to continue to <strong className="text-gray-900">Info Stream AI</strong>
-                    </p>
-
-                    {/* Pre-configured Account Options */}
-                    <div className="space-y-3 mb-6">
-                      <button
-                        onClick={() => handleGoogleAuth("khalil789k@gmail.com", "Khalil Ahmad")}
-                        className="flex items-center gap-4 w-full p-3.5 hover:bg-gray-50 border-2 border-gray-200 rounded-xl transition-all text-left group"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-base border-2 border-blue-200 group-hover:bg-blue-200 transition-colors">
-                          K
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 text-sm">Khalil Ahmad</p>
-                          <p className="text-xs text-gray-500 truncate">khalil789k@gmail.com</p>
-                        </div>
-                      </button>
-
-                      <button
-                        onClick={() => handleGoogleAuth("guest.stream@gmail.com", "Guest User")}
-                        className="flex items-center gap-4 w-full p-3.5 hover:bg-gray-50 border-2 border-gray-200 rounded-xl transition-all text-left group"
-                      >
-                        <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center font-bold text-green-700 text-base border-2 border-green-200 group-hover:bg-green-200 transition-colors">
-                          G
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-gray-900 text-sm">Guest User</p>
-                          <p className="text-xs text-gray-500 truncate">guest.stream@gmail.com</p>
-                        </div>
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={() => setShowCustomGoogleForm(true)}
-                      className="w-full text-center py-3 bg-gray-50 border-2 border-dashed border-gray-300 hover:border-gray-900 rounded-xl text-sm font-bold text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      Use another account
-                    </button>
+                    <Label className="text-xs font-bold text-gray-700">Google Email Address</Label>
+                    <Input
+                      type="email"
+                      value={customGoogleEmail}
+                      onChange={(e) => setCustomGoogleEmail(e.target.value)}
+                      placeholder="yourname@gmail.com"
+                      className="h-12 mt-1.5 rounded-xl border-2 pl-4 text-sm"
+                      required
+                    />
                   </div>
-                ) : (
-                  <form onSubmit={handleCustomGoogleSubmit} className="space-y-4">
-                    <button
-                      type="button"
-                      onClick={() => setShowCustomGoogleForm(false)}
-                      className="flex items-center gap-1.5 text-xs font-bold text-gray-500 hover:text-gray-900 transition-colors mb-2"
-                    >
-                      <ArrowLeft className="h-3.5 w-3.5" />
-                      Back to accounts
-                    </button>
 
-                    <div>
-                      <Label className="text-xs font-bold text-gray-700">Google Email</Label>
-                      <Input
-                        type="email"
-                        value={customGoogleEmail}
-                        onChange={(e) => setCustomGoogleEmail(e.target.value)}
-                        placeholder="yourname@gmail.com"
-                        className="h-12 mt-1.5 rounded-xl border-2 pl-4 text-sm"
-                        required
-                      />
-                    </div>
+                  <div>
+                    <Label className="text-xs font-bold text-gray-700">Display Name</Label>
+                    <Input
+                      type="text"
+                      value={customGoogleName}
+                      onChange={(e) => setCustomGoogleName(e.target.value)}
+                      placeholder="John Doe"
+                      className="h-12 mt-1.5 rounded-xl border-2 pl-4 text-sm"
+                      required
+                    />
+                  </div>
 
-                    <div>
-                      <Label className="text-xs font-bold text-gray-700">Display Name</Label>
-                      <Input
-                        type="text"
-                        value={customGoogleName}
-                        onChange={(e) => setCustomGoogleName(e.target.value)}
-                        placeholder="John Doe"
-                        className="h-12 mt-1.5 rounded-xl border-2 pl-4 text-sm"
-                      />
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full h-12 bg-gray-900 hover:bg-gray-800 rounded-xl text-sm font-bold mt-2"
-                    >
-                      Connect & Sign In
-                    </Button>
-                  </form>
-                )}
+                  <Button
+                    type="submit"
+                    className="w-full h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-bold mt-2 shadow-md"
+                  >
+                    Connect & Sign In
+                  </Button>
+                </form>
 
                 <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-400">
                   <span>Info Stream Local OAuth v1.0</span>
