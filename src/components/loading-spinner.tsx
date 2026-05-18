@@ -45,11 +45,11 @@ export function LoadingSpinner({
           }}
         >
           <Image
-            src="/process_transparent.png"
+            src="/process.jpeg"
             alt="Processing Content"
             width={144}
             height={144}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-cover rounded-2xl shadow-md border border-gray-100"
             priority
           />
         </motion.div>

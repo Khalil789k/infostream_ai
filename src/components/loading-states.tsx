@@ -21,11 +21,11 @@ export function ProcessingAnimation({ type, progress = 0 }: LoadingStateProps) {
           className="w-full mb-8 relative"
         >
           <Image 
-            src="/process_transparent.png" 
+            src="/process.jpeg" 
             alt="Processing" 
             width={500} 
             height={500} 
-            className="object-cover w-full h-auto"
+            className="object-cover w-full h-auto rounded-2xl shadow-lg border border-gray-100"
             priority
           />
         </motion.div>
