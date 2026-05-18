@@ -1,21 +1,14 @@
 import { getApiUrl, getAuthHeaders, handleResponse } from './client';
 import { AuthResponse, User, UserStats } from '@/types/api';
 
-export async function register(email: string, password: string, displayName?: string): Promise<AuthResponse> {
+export async function register(email: string, password: string, displayName?: string): Promise<{ success: boolean; email: string; message: string }> {
   const response = await fetch(`${getApiUrl()}/api/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, displayName }),
   });
 
-  const data = await handleResponse<AuthResponse>(response);
-  
-  if (typeof window !== 'undefined' && data.token) {
-    localStorage.setItem('auth_token', data.token);
-    localStorage.setItem('user', JSON.stringify(data.user));
-  }
-  
-  return data;
+  return handleResponse<{ success: boolean; email: string; message: string }>(response);
 }
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
@@ -35,11 +28,11 @@ export async function login(email: string, password: string): Promise<AuthRespon
   return data;
 }
 
-export async function googleLogin(email: string, displayName?: string, photoURL?: string): Promise<AuthResponse> {
+export async function googleLogin(idToken: string): Promise<AuthResponse> {
   const response = await fetch(`${getApiUrl()}/api/auth/google-login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, displayName, photoURL }),
+    body: JSON.stringify({ idToken }),
   });
 
   const data = await handleResponse<AuthResponse>(response);
@@ -50,6 +43,50 @@ export async function googleLogin(email: string, displayName?: string, photoURL?
   }
   
   return data;
+}
+
+export async function verifyOtp(email: string, otp: string): Promise<AuthResponse> {
+  const response = await fetch(`${getApiUrl()}/api/auth/verify-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp }),
+  });
+
+  const data = await handleResponse<AuthResponse>(response);
+  
+  if (typeof window !== 'undefined' && data.token) {
+    localStorage.setItem('auth_token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+  }
+  
+  return data;
+}
+
+export async function resendOtp(email: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${getApiUrl()}/api/auth/resend-otp`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return handleResponse<{ success: boolean; message: string }>(response);
+}
+
+export async function forgotPassword(email: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${getApiUrl()}/api/auth/forgot-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return handleResponse<{ success: boolean; message: string }>(response);
+}
+
+export async function resetPassword(email: string, otp: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+  const response = await fetch(`${getApiUrl()}/api/auth/reset-password`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, otp, newPassword }),
+  });
+  return handleResponse<{ success: boolean; message: string }>(response);
 }
 
 export async function getCurrentUser(): Promise<{ success: boolean; user: User }> {
