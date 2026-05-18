@@ -50,17 +50,69 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
     }
   }, [resendTimer]);
 
-  // Load Google Identity Services SDK
+  // Load Google Identity Services SDK and initialize
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://accounts.google.com/gsi/client";
     script.async = true;
     script.defer = true;
+    script.onload = () => {
+      initializeGoogleButton();
+    };
     document.body.appendChild(script);
     return () => {
-      document.body.removeChild(script);
+      try {
+        document.body.removeChild(script);
+      } catch (e) {}
     };
   }, []);
+
+  // Re-render button when mode changes
+  useEffect(() => {
+    initializeGoogleButton();
+  }, [mode]);
+
+  const initializeGoogleButton = () => {
+    const client_id = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    if (!client_id || client_id === "your-google-client-id" || client_id.includes("your-")) {
+      return;
+    }
+    
+    if (typeof window !== "undefined" && (window as any).google) {
+      try {
+        const googleAuth = (window as any).google.accounts.id;
+        googleAuth.initialize({
+          client_id: client_id,
+          callback: async (response: any) => {
+            setLoading(true);
+            setError(null);
+            try {
+              const res = await googleLogin(response.credential);
+              onSuccess(res.user);
+            } catch (err: any) {
+              setError(err.message || "Google authentication failed");
+            } finally {
+              setLoading(false);
+            }
+          }
+        });
+
+        // Render Google Sign-in button inside our container
+        const btnParent = document.getElementById("google-official-btn");
+        if (btnParent) {
+          googleAuth.renderButton(btnParent, {
+            theme: "filled_blue",
+            size: "large",
+            shape: "pill",
+            width: btnParent.offsetWidth || 350,
+            text: "continue_with"
+          });
+        }
+      } catch (e) {
+        console.warn("Failed to render native Google button:", e);
+      }
+    }
+  };
 
   const handleGoogleClick = () => {
     setError(null);
@@ -305,16 +357,24 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
 
             {(mode === "signin" || mode === "signup") && (
               <>
-                <button
-                  type="button"
-                  onClick={handleGoogleClick}
-                  className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-full transition-all shadow-lg mb-6 border-2 border-gray-900"
-                >
-                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
-                    <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-6.887 4.114-4.68 0-8.486-3.856-8.486-8.514s3.806-8.514 8.486-8.514c2.203 0 4.17.804 5.7 2.378l3.186-3.186C18.17 1.343 15.39 0 12.24 0 5.48 0 0 5.48 0 12.24s5.48 12.24 12.24 12.24c6.756 0 11.76-4.757 11.76-11.76 0-.742-.08-1.503-.23-2.185H12.24z"/>
-                  </svg>
-                  Continue with Google
-                </button>
+                {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && 
+                 process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID !== "your-google-client-id" && 
+                 !process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID.includes("your-") ? (
+                  <div className="w-full flex justify-center mb-6">
+                    <div id="google-official-btn" className="w-full max-w-sm h-[50px] overflow-hidden" />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleGoogleClick}
+                    className="w-full flex items-center justify-center gap-3 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-full transition-all shadow-lg mb-6 border-2 border-gray-900"
+                  >
+                    <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                      <path d="M12.24 10.285V14.4h6.887c-.648 2.41-2.519 4.114-6.887 4.114-4.68 0-8.486-3.856-8.486-8.514s3.806-8.514 8.486-8.514c2.203 0 4.17.804 5.7 2.378l3.186-3.186C18.17 1.343 15.39 0 12.24 0 5.48 0 0 5.48 0 12.24s5.48 12.24 12.24 12.24c6.756 0 11.76-4.757 11.76-11.76 0-.742-.08-1.503-.23-2.185H12.24z"/>
+                    </svg>
+                    Continue with Google
+                  </button>
+                )}
 
                 <div className="flex items-center gap-4 my-6">
                   <div className="flex-1 h-px bg-gray-200" />
@@ -340,7 +400,7 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
                     <Input 
                       value={name} 
                       onChange={e => setName(e.target.value)} 
-                      placeholder="John Doe" 
+                      placeholder="Full Name" 
                       className="pl-12 h-14 rounded-xl border-2 border-gray-200 focus:border-gray-900 transition-all font-medium" 
                       required 
                     />
@@ -356,7 +416,7 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
                     type="email" 
                     value={email} 
                     onChange={e => setEmail(e.target.value)} 
-                    placeholder="name@example.com" 
+                    placeholder="Email Address" 
                     className="pl-12 h-14 rounded-xl border-2 border-gray-200 focus:border-gray-900 transition-all font-medium" 
                     required 
                   />
@@ -735,7 +795,7 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
                       type="text"
                       value={customGoogleName}
                       onChange={(e) => setCustomGoogleName(e.target.value)}
-                      placeholder="John Doe"
+                      placeholder="Full Name"
                       className="h-12 mt-1.5 rounded-xl border-2 pl-4 text-sm font-medium"
                       required
                     />
