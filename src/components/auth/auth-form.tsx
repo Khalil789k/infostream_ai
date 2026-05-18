@@ -64,9 +64,15 @@ export function AuthForm({ initialMode, onSuccess }: AuthFormProps) {
 
   const handleGoogleClick = () => {
     setError(null);
+    const client_id = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+    
+    // If no client ID is set, immediately open the premium secure manual connector!
+    if (!client_id || client_id === "your-google-client-id") {
+      setShowGoogleModal(true);
+      return;
+    }
+    
     try {
-      const client_id = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "104928509384-mockgoogleclientid.apps.googleusercontent.com";
-      
       if (typeof window !== "undefined" && (window as any).google) {
         const googleAuth = (window as any).google.accounts.id;
         googleAuth.initialize({
