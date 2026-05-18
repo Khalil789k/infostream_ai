@@ -367,6 +367,17 @@ export function VideoPlayer({
     };
   }, [loadedCaptions, showCaptions]);
 
+  // Auto-hide controls overlay on mobile/idle hover when playing
+  useEffect(() => {
+    let timeoutId: any;
+    if (isPlaying && isHovered) {
+      timeoutId = setTimeout(() => {
+        setIsHovered(false);
+      }, 3500);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [isPlaying, isHovered]);
+
   const handlePlayPause = () => {
     if (videoRef.current) {
       if (isPlaying) {
@@ -376,6 +387,15 @@ export function VideoPlayer({
       }
       setIsPlaying(!isPlaying);
     }
+  };
+
+  const handlePlayerClick = () => {
+    // On mobile touchscreens, show controls first on tap instead of instantly pausing the video
+    if (isPlaying && !isHovered) {
+      setIsHovered(true);
+      return;
+    }
+    handlePlayPause();
   };
 
   const handleTimeUpdate = () => {
@@ -567,7 +587,7 @@ export function VideoPlayer({
           style={{ maxHeight: '400px' }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
-          onClick={handlePlayPause}
+          onClick={handlePlayerClick}
         >
           {isLoading && (
             <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
@@ -665,8 +685,8 @@ export function VideoPlayer({
             onPlay={() => setIsPlaying(true)}
             onPause={() => setIsPlaying(false)}
             onEnded={() => setIsPlaying(false)}
-            crossOrigin="anonymous"
             playsInline
+            preload="auto"
           >
             Your browser does not support the video tag.
           </video>
@@ -753,7 +773,7 @@ export function VideoPlayer({
                     step="0.01"
                     value={volume}
                     onChange={handleVolumeChange}
-                    className="w-20"
+                    className="w-20 hidden sm:block"
                   />
                 </div>
 

@@ -187,18 +187,16 @@ export function ResultsView({ content, onNewSession }: ResultsViewProps) {
         {/* Video Player */}
         {content.sourceType === 'video' && (
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
-            <Card className="bg-white border-2 border-gray-400 shadow-sm p-4">
-               <VideoPlayer
-                  originalVideoUrl={content.originalVideoUrl}
-                  dubbedVideoUrl={content.dubbedVideoUrl}
-                  captions={content.captions}
-                  captionsSrt={content.captionsSrt}
-                  captionsVtt={content.captionsVtt}
-                  title={content.sourceTitle}
-                  documentId={content.id}
-                  onOperationChange={setVideoOperation}
-                />
-            </Card>
+             <VideoPlayer
+                originalVideoUrl={content.originalVideoUrl}
+                dubbedVideoUrl={content.dubbedVideoUrl}
+                captions={content.captions}
+                captionsSrt={content.captionsSrt}
+                captionsVtt={content.captionsVtt}
+                title={content.sourceTitle}
+                documentId={content.id}
+                onOperationChange={setVideoOperation}
+              />
           </motion.div>
         )}
 
