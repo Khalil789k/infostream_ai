@@ -1,31 +1,24 @@
 "use client";
 
 const DEVELOPERS = [
-  { name: "Khalil Ahmad", role: "Lead Developer", description: "Passionate about AI-powered learning solutions.", avatar: "KA" },
-  { name: "Muhammad Nawaz Qasim", role: "Developer", description: "Focused on seamless UX and NLP tech.", avatar: "MN" },
-  { name: "Attique Ur Rehman", role: "Developer", description: "Dedicated to robust backend systems.", avatar: "AU" },
-  { name: "Aqeel Ur Rehman", role: "Developer", description: "Optimizing AI performance and deployment.", avatar: "AQ" },
+  { name: "Khalil Ahmad" },
+  { name: "Muhammad Nawaz Qasim" },
+  { name: "Attique Ur Rehman" },
+  { name: "Aqeel Ur Rehman" },
 ];
 
 export function DevelopersSection() {
   return (
-    <section className="w-full py-24 bg-blue-50 relative overflow-hidden">
-      <div className="absolute inset-0 opacity-5 flex items-center justify-center">
+    <section className="w-full py-20 bg-blue-50 relative overflow-hidden">
+      <div className="absolute inset-0 opacity-5 flex items-center justify-center pointer-events-none">
         <span className="text-9xl font-bold">INFO STREAM AI</span>
       </div>
-      <div className="max-w-[1400px] mx-auto px-6 lg:px-8 relative z-10">
-        <h2 className="text-4xl font-bold text-center mb-16">About the Developers</h2>
+      <div className="max-w-[1200px] mx-auto px-6 lg:px-8 relative z-10">
+        <h2 className="text-3xl font-extrabold text-center mb-12 tracking-tight text-gray-900">About the Developers</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {DEVELOPERS.map((dev, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl border border-gray-100 shadow-sm transition-transform hover:-translate-y-1">
-              <p className="text-gray-600 mb-6 italic">"{dev.description}"</p>
-              <div className="flex items-center gap-3">
-                <div className="h-12 w-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold">{dev.avatar}</div>
-                <div>
-                  <p className="font-bold text-gray-900">{dev.name}</p>
-                  <p className="text-sm text-gray-500">{dev.role}</p>
-                </div>
-              </div>
+            <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-xl flex items-center justify-center min-h-[90px] text-center">
+              <p className="font-extrabold text-lg text-gray-900 tracking-tight">{dev.name}</p>
             </div>
           ))}
         </div>
