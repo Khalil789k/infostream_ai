@@ -229,44 +229,35 @@ export default function DashboardHome() {
           className="mt-8 sm:mt-12 md:mt-16 w-full"
         >
           <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:items-stretch w-full">
-            {/* Pakistan Sign Language Card */}
+            {/* Pakistan Sign Language Card (Service Temporarily Offline) */}
             <div 
-              onClick={() => router.push('/dashboard/psl')}
-              className="bg-gradient-to-br from-indigo-600 via-blue-700 to-indigo-900 rounded-2xl border-2 border-indigo-400 shadow-2xl w-full lg:flex-[2] lg:max-w-2xl min-h-[300px] p-6 sm:p-8 md:p-10 cursor-pointer group relative overflow-hidden flex flex-col justify-between transition-all duration-500 hover:scale-[1.01] hover:shadow-indigo-200/50"
+              className="bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 rounded-2xl border-2 border-slate-600 shadow-2xl w-full lg:flex-[2] lg:max-w-2xl min-h-[300px] p-6 sm:p-8 md:p-10 cursor-not-allowed group relative overflow-hidden flex flex-col justify-between transition-all duration-500"
             >
               {/* Background decorative elements */}
-              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl rounded-full -mr-32 -mt-32 group-hover:bg-white/20 transition-colors" />
-              <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-400/20 blur-2xl rounded-full -ml-16 -mb-16" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 blur-3xl rounded-full -mr-32 -mt-32" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 bg-slate-500/10 blur-2xl rounded-full -ml-16 -mb-16" />
               
               <div className="relative z-10">
                 <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/30 group-hover:scale-110 transition-transform">
-                    <Languages className="h-6 w-6 text-white" />
+                  <div className="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-md border border-white/20">
+                    <Languages className="h-6 w-6 text-slate-400" />
                   </div>
-                  <div className="px-3 py-1 bg-white/10 rounded-full border border-white/20 backdrop-blur-sm">
-                    <span className="text-[10px] font-black text-white uppercase tracking-widest">New Feature</span>
+                  <div className="px-3 py-1 bg-amber-500/25 rounded-full border border-amber-500/30 backdrop-blur-sm">
+                    <span className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Under Maintenance</span>
                   </div>
                 </div>
 
-                <h2 className="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight leading-tight">
+                <h2 className="text-3xl sm:text-4xl font-black text-slate-300 mb-4 tracking-tight leading-tight">
                   Pakistan Sign <br /> Language Interpreter
                 </h2>
-                <p className="text-blue-100 text-sm sm:text-base md:text-lg leading-relaxed max-w-md font-medium opacity-90">
-                  Experience real-time text-to-PSL translation with our advanced 3D avatar. Bridge the communication gap instantly.
+                <p className="text-slate-400 text-sm sm:text-base md:text-lg leading-relaxed max-w-md font-medium">
+                  The PSL Interpreter service is temporarily offline for backend maintenance and avatar updates. We apologize for the inconvenience.
                 </p>
               </div>
 
               <div className="relative z-10 mt-8 flex items-center justify-between">
-                <div className="flex items-center gap-2 px-4 py-2 bg-white text-indigo-600 rounded-xl font-black text-sm shadow-xl group-hover:bg-indigo-50 transition-colors">
-                  TRY INTERPRETER
-                  <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </div>
-                <div className="hidden sm:flex -space-x-3">
-                   {[1,2,3].map(i => (
-                     <div key={i} className="w-10 h-10 rounded-full border-2 border-indigo-500 bg-indigo-400/30 backdrop-blur-sm flex items-center justify-center text-white text-xs font-bold">
-                       {i}
-                     </div>
-                   ))}
+                <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 text-slate-500 rounded-xl font-black text-sm border border-slate-700">
+                  TEMPORARILY OFFLINE
                 </div>
               </div>
             </div>

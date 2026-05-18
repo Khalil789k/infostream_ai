@@ -81,6 +81,11 @@ function SignAvatarModel({ currentAnimation, progress }: any) {
 
 export default function PSLPage() {
   const router = useRouter();
+  
+  useEffect(() => {
+    router.replace('/dashboard');
+  }, []);
+
   const [inputText, setInputText] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
