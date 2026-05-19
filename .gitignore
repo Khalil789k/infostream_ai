@@ -50,3 +50,5 @@ test_video/
 *.db
 *.log
 scratch/
+download_models.py
+ai_models/

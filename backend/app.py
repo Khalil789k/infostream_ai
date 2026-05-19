@@ -44,6 +44,10 @@ def create_app():
     init_db(app)
     jwt = JWTManager(app)
     
+    # Initialize and start Task Queue Manager
+    from queue_manager import ProcessingQueueManager
+    ProcessingQueueManager(app)
+    
     # Register core routes (Blueprints)
     register_blueprints(app)
     

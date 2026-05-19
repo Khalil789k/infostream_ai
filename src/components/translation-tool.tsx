@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "./ui/scroll-area";
 
 import { translateText as apiTranslateText } from '@/lib/api';
+import { QueueProgressOverlay } from './QueueProgressOverlay';
 
 const languages = [
   { value: "Urdu", label: "Urdu" },
@@ -28,6 +29,10 @@ export function TranslationTool({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [deferredResolve, setDeferredResolve] = useState<((result: any) => void) | null>(null);
+  const [deferredReject, setDeferredReject] = useState<((err: any) => void) | null>(null);
+
   const handleTranslate = async () => {
     if (!targetLanguage) {
       toast({
@@ -42,7 +47,17 @@ export function TranslationTool({
     try {
       // Pass documentId to update existing document instead of creating new one
       const result = await apiTranslateText(textToTranslate, targetLanguage, documentId);
-      setTranslatedText(result.translatedText);
+      
+      let finalResult = result;
+      if (result.queued && result.taskId) {
+        finalResult = await new Promise<any>((resolve, reject) => {
+          setActiveTaskId(result.taskId);
+          setDeferredResolve(() => resolve);
+          setDeferredReject(() => reject);
+        });
+      }
+      
+      setTranslatedText(finalResult.translatedText);
       toast({
         variant: "default",
         title: "Translation Saved",
@@ -104,6 +119,21 @@ export function TranslationTool({
           </Card>
         )}
       </CardContent>
+      {activeTaskId && (
+        <QueueProgressOverlay
+          taskId={activeTaskId}
+          taskType="translation"
+          onComplete={(res) => {
+            setActiveTaskId(null);
+            if (deferredResolve) deferredResolve(res);
+          }}
+          onCancel={() => {
+            setActiveTaskId(null);
+            setIsLoading(false);
+            if (deferredReject) deferredReject(new Error("Request was cancelled."));
+          }}
+        />
+      )}
     </Card>
   );
 }

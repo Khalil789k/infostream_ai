@@ -94,108 +94,151 @@ def get_dubbed_video(video_id, filename):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+def run_dub_video(user_id, document_id, voice):
+    from models import db, ProcessedDocument
+    from api.services import voice_dubber, video_processor
+    from utils.text_cleaner import TextCleaner
+    import os
+    
+    document = ProcessedDocument.query.filter_by(id=document_id, user_id=user_id, is_deleted=False).first()
+    if not document or document.source_type != 'video':
+        raise ValueError("Invalid document for dubbing")
+        
+    if document.dubbed_video_url:
+        return {'dubbedVideoUrl': document.dubbed_video_url}
+        
+    video_storage = current_app.config['VIDEO_STORAGE']
+    
+    # Robust path resolution - try multiple naming patterns
+    possible_paths = [
+        os.path.join(video_storage, f"{document.video_id}_{document.file_name}"),
+        os.path.join(video_storage, document.file_name),
+        os.path.join(video_storage, f"video_{document.video_id}_{document.file_name}"),
+        os.path.join(video_storage, f"video_{document.file_name}") if not document.file_name.startswith('video_') else None,
+    ]
+    original_video_path = next((p for p in possible_paths if p and os.path.exists(p)), None)
+    
+    if not original_video_path:
+        raise ValueError("Original video file missing")
+        
+    segments = document.transcription_segments
+    if not segments:
+        video_result = video_processor.process_video(original_video_path)
+        segments = video_result.get('segments', [])
+        if segments:
+            document.transcription_segments = segments
+            db.session.commit()
+            
+    if not segments:
+        raise ValueError("No transcription segments found")
+        
+    # Split segments into sentences for fine-grained sentence-by-sentence dubbing
+    try:
+        segments = TextCleaner().split_segments_into_sentences(segments)
+    except Exception as e:
+        logger.error(f"Error splitting dubbing segments: {e}")
+        
+    dubbed_filename = f"dubbed_{document.video_id}_{document.file_name}"
+    voice_dubber.dub_video(original_video_path, segments, os.path.join(video_storage, dubbed_filename), voice)
+    
+    document.dubbed_video_url = f"/api/video/dubbed/{document.video_id}/{dubbed_filename}"
+    db.session.commit()
+    return {'dubbedVideoUrl': document.dubbed_video_url}
+
 @video_bp.route('/api/video/<document_id>/dub', methods=['POST'])
 @jwt_required()
 def dub_video(document_id):
-    """Generate Urdu dubbed version."""
+    """Queue video dubbing."""
     try:
         user_id = get_jwt_identity()
         document = ProcessedDocument.query.filter_by(id=document_id, user_id=user_id, is_deleted=False).first()
-        if not document or document.source_type != 'video': return jsonify({'error': 'Invalid document'}), 400
+        if not document or document.source_type != 'video': 
+            return jsonify({'error': 'Invalid document'}), 400
         
         if document.dubbed_video_url:
             return jsonify({'success': True, 'dubbedVideoUrl': document.dubbed_video_url}), 200
-        
+            
         voice = (request.get_json() or {}).get('voice', 'female')
-        video_storage = current_app.config['VIDEO_STORAGE']
         
-        # Robust path resolution - try multiple naming patterns
-        possible_paths = [
-            os.path.join(video_storage, f"{document.video_id}_{document.file_name}"),
-            os.path.join(video_storage, document.file_name),
-            os.path.join(video_storage, f"video_{document.video_id}_{document.file_name}"),
-            # Handle cases where file_name already has prefixes
-            os.path.join(video_storage, f"video_{document.file_name}") if not document.file_name.startswith('video_') else None,
-        ]
+        from queue_manager import ProcessingQueueManager
+        task_id = ProcessingQueueManager().add_task(
+            user_id, 'dubbing', run_dub_video, user_id, document_id, voice
+        )
         
-        original_video_path = next((p for p in possible_paths if p and os.path.exists(p)), None)
-        
-        if not original_video_path:
-            logger.error(f"Original file missing for document {document_id}. Tried paths: {possible_paths}")
-            return jsonify({'error': 'Original file missing'}), 404
-        
-        segments = document.transcription_segments
-        if not segments:
-            logger.info(f"Segments not cached in DB for document {document_id}. Generating and caching them now.")
-            video_result = video_processor.process_video(original_video_path)
-            segments = video_result.get('segments', [])
-            if segments:
-                document.transcription_segments = segments
-                db.session.commit()
-                
-        if not segments: return jsonify({'error': 'No segments found'}), 400
-        
-        # Split segments into sentences for fine-grained sentence-by-sentence dubbing
-        try:
-            from utils.text_cleaner import TextCleaner
-            segments = TextCleaner().split_segments_into_sentences(segments)
-            logger.info(f"Split dubbing segments into {len(segments)} sentence-level segments.")
-        except Exception as split_err:
-            logger.error(f"Error splitting dubbing segments: {split_err}")
-        
-        dubbed_filename = f"dubbed_{document.video_id}_{document.file_name}"
-        dubbed_path = voice_dubber.dub_video(original_video_path, segments, os.path.join(video_storage, dubbed_filename), voice)
-        
-        document.dubbed_video_url = f"/api/video/dubbed/{document.video_id}/{dubbed_filename}"
-        db.session.commit()
-        return jsonify({'success': True, 'dubbedVideoUrl': document.dubbed_video_url}), 200
+        return jsonify({
+            'success': True,
+            'queued': True,
+            'taskId': task_id
+        }), 202
     except Exception as e:
         db.session.rollback()
+        logger.error(f"Error queuing dubbing: {e}")
         return jsonify({'error': str(e)}), 500
 
 @video_bp.route('/api/video/<document_id>/captions', methods=['GET'])
 @jwt_required()
+def run_get_video_captions(user_id, document_id):
+    from models import db, ProcessedDocument
+    from api.services import video_processor, caption_generator
+    from utils.text_cleaner import TextCleaner
+    import os
+    
+    document = ProcessedDocument.query.filter_by(id=document_id, user_id=user_id, is_deleted=False).first()
+    if not document or document.source_type != 'video':
+        raise ValueError("Invalid document")
+        
+    video_storage = current_app.config['VIDEO_STORAGE']
+    possible_paths = [
+        os.path.join(video_storage, f"{document.video_id}_{document.file_name}"),
+        os.path.join(video_storage, document.file_name),
+        os.path.join(video_storage, f"video_{document.video_id}_{document.file_name}"),
+        os.path.join(video_storage, f"video_{document.file_name}") if not document.file_name.startswith('video_') else None,
+    ]
+    original_video_path = next((p for p in possible_paths if p and os.path.exists(p)), None)
+    if not original_video_path:
+        raise ValueError("Original file missing")
+        
+    segments = document.transcription_segments
+    if not segments:
+        video_result = video_processor.process_video(original_video_path)
+        segments = video_result.get('segments', [])
+        if segments:
+            document.transcription_segments = segments
+            db.session.commit()
+            
+    try:
+        segments = TextCleaner().split_segments_into_sentences(segments)
+    except Exception as e:
+        logger.error(f"Error splitting captions segments: {e}")
+        
+    urdu_captions = caption_generator.generate_captions(segments, target_language='urdu')
+    return {
+        'captions': urdu_captions,
+        'captionsSrt': caption_generator.format_srt(urdu_captions),
+        'captionsVtt': caption_generator.format_vtt(urdu_captions)
+    }
+
+@video_bp.route('/api/video/<document_id>/captions', methods=['GET'])
+@jwt_required()
 def get_video_captions(document_id):
-    """Get Urdu captions."""
+    """Queue Urdu captions generation."""
     try:
         user_id = get_jwt_identity()
         document = ProcessedDocument.query.filter_by(id=document_id, user_id=user_id, is_deleted=False).first()
         if not document or document.source_type != 'video': return jsonify({'error': 'Invalid document'}), 400
         
-        video_storage = current_app.config['VIDEO_STORAGE']
-        possible_paths = [
-            os.path.join(video_storage, f"{document.video_id}_{document.file_name}"),
-            os.path.join(video_storage, document.file_name),
-            os.path.join(video_storage, f"video_{document.video_id}_{document.file_name}"),
-            os.path.join(video_storage, f"video_{document.file_name}") if not document.file_name.startswith('video_') else None,
-        ]
-        original_video_path = next((p for p in possible_paths if p and os.path.exists(p)), None)
-        if not original_video_path: return jsonify({'error': 'Original file missing'}), 404
-        segments = document.transcription_segments
-        if not segments:
-            logger.info(f"Segments not cached in DB for document {document_id}. Generating and caching them now.")
-            video_result = video_processor.process_video(original_video_path)
-            segments = video_result.get('segments', [])
-            if segments:
-                document.transcription_segments = segments
-                db.session.commit()
+        from queue_manager import ProcessingQueueManager
+        task_id = ProcessingQueueManager().add_task(
+            user_id, 'captions', run_get_video_captions, user_id, document_id
+        )
         
-        # Split segments into sentences for beautiful 1-sentence captions
-        try:
-            from utils.text_cleaner import TextCleaner
-            segments = TextCleaner().split_segments_into_sentences(segments)
-            logger.info(f"Split captions segments into {len(segments)} sentence-level segments.")
-        except Exception as split_err:
-            logger.error(f"Error splitting captions segments: {split_err}")
-            
-        urdu_captions = caption_generator.generate_captions(segments, target_language='urdu')
         return jsonify({
             'success': True,
-            'captions': urdu_captions,
-            'captionsSrt': caption_generator.format_srt(urdu_captions),
-            'captionsVtt': caption_generator.format_vtt(urdu_captions)
-        }), 200
+            'queued': True,
+            'taskId': task_id
+        }), 202
     except Exception as e:
+        logger.error(f"Error queuing captions: {e}")
         return jsonify({'error': str(e)}), 500
 
 @video_bp.route('/api/video/<document_id>/transcription', methods=['GET'])

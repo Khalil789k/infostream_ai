@@ -6,21 +6,24 @@ import { processVideo } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import type { ProcessedContent } from '@/types';
+import { QueueProgressOverlay } from '@/components/QueueProgressOverlay';
 
 export default function VideoInputPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [deferredResolve, setDeferredResolve] = useState<((id: string) => void) | null>(null);
+  const [deferredReject, setDeferredReject] = useState<((err: any) => void) | null>(null);
 
-  const handleSubmit = async (file: File, fileName: string) => {
+  const handleSubmit = async (file: File, fileName: string): Promise<string> => {
     if (!file) {
       toast({
         variant: "destructive",
         title: "Error",
         description: "Please select a video file.",
       });
-      return;
+      throw new Error("Please select a video file.");
     }
     
     setIsLoading(true);
@@ -28,33 +31,20 @@ export default function VideoInputPage() {
       toast({
         variant: "default",
         title: "Processing Video",
-        description: "This may take a few minutes. Please wait...",
+        description: "Submitting request to task queue...",
       });
       
       const result = await processVideo(file);
-      const newSessionData: ProcessedContent = {
-        id: result.id,
-        sourceType: 'video',
-        sourceText: result.transcription || result.urduTranscription || '',
-        sourceTitle: result.title || fileName,
-        summary: result.summary,
-        keywords: result.keywords,
-        notes: result.notes,
-        transcription: result.transcription,
-        urduTranscription: result.urduTranscription,
-        captions: result.captions,
-        captionsSrt: result.captionsSrt,
-        captionsVtt: result.captionsVtt,
-        videoDuration: result.videoDuration,
-        detectedLanguage: result.detectedLanguage,
-        videoId: result.videoId,
-        originalVideoUrl: result.originalVideoUrl,
-        dubbedVideoUrl: result.dubbedVideoUrl,
-        createdAt: new Date().toISOString(),
-      };
       
-      // Return result ID so the child component can smoothly finish the animation before navigating
-      return result.id;
+      if (result.queued && result.taskId) {
+        return new Promise<string>((resolve, reject) => {
+          setActiveTaskId(result.taskId);
+          setDeferredResolve(() => resolve);
+          setDeferredReject(() => reject);
+        });
+      } else {
+        return result.id;
+      }
     } catch (error: any) {
       console.error(error);
       toast({
@@ -67,10 +57,42 @@ export default function VideoInputPage() {
     }
   };
 
+  const handleQueueComplete = (finalResult: any) => {
+    setActiveTaskId(null);
+    toast({
+      variant: "default",
+      title: "Success",
+      description: "Video processed successfully!",
+    });
+    if (deferredResolve) {
+      deferredResolve(finalResult.id);
+    }
+  };
+
+  const handleQueueCancel = () => {
+    setActiveTaskId(null);
+    setIsLoading(false);
+    toast({
+      variant: "destructive",
+      title: "Cancelled",
+      description: "Video processing request was cancelled.",
+    });
+    if (deferredReject) {
+      deferredReject(new Error("Request was cancelled."));
+    }
+  };
+
   return (
     <DashboardLayout>
-      <VideoInput onSubmit={handleSubmit} isProcessing={isLoading} />
+      <VideoInput onSubmit={handleSubmit} isProcessing={isLoading && !activeTaskId} />
+      {activeTaskId && (
+        <QueueProgressOverlay
+          taskId={activeTaskId}
+          taskType="video"
+          onComplete={handleQueueComplete}
+          onCancel={handleQueueCancel}
+        />
+      )}
     </DashboardLayout>
   );
 }
-

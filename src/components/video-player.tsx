@@ -10,6 +10,7 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { getVideoCaptions, dubVideo } from '@/lib/api';
+import { QueueProgressOverlay } from './QueueProgressOverlay';
 
 type VideoPlayerProps = {
   videoUrl?: string; // URL to video file (if available)
@@ -67,6 +68,12 @@ export function VideoPlayer({
   const [dubProgress, setDubProgress] = useState(0);
   const [captionProgress, setCaptionProgress] = useState(0);
   const [operationInProgress, setOperationInProgress] = useState<'none' | 'dubbing' | 'captions'>('none');
+
+  // Queued operations states
+  const [activeTaskId, setActiveTaskId] = useState<string | null>(null);
+  const [queueTaskType, setQueueTaskType] = useState<string>('');
+  const [deferredResolve, setDeferredResolve] = useState<((result: any) => void) | null>(null);
+  const [deferredReject, setDeferredReject] = useState<((err: any) => void) | null>(null);
 
   // Notify parent of operation status
   useEffect(() => {
@@ -229,35 +236,31 @@ export function VideoPlayer({
     
     setOperationInProgress('captions');
     setLoadingCaptions(true);
-    setCaptionProgress(0);
     
     try {
-      // Simulate progress (since backend doesn't support streaming progress yet)
-      const progressInterval = setInterval(() => {
-        setCaptionProgress(prev => {
-          if (prev >= 90) return prev;
-          return prev + 10;
-        });
-      }, 500);
-      
       const result = await getVideoCaptions(documentId);
       
-      clearInterval(progressInterval);
-      setCaptionProgress(100);
-      
-      setLoadedCaptions(result.captions);
-      setLoadedCaptionsSrt(result.captionsSrt);
-      setLoadedCaptionsVtt(result.captionsVtt);
-      setShowCaptions(true);
-      
-      // Reset progress after a moment
-      setTimeout(() => {
-        setCaptionProgress(0);
-      }, 1000);
+      if (result.queued && result.taskId) {
+        const finalResult = await new Promise<any>((resolve, reject) => {
+          setActiveTaskId(result.taskId);
+          setQueueTaskType('captions');
+          setDeferredResolve(() => resolve);
+          setDeferredReject(() => reject);
+        });
+        
+        setLoadedCaptions(finalResult.captions);
+        setLoadedCaptionsSrt(finalResult.captionsSrt);
+        setLoadedCaptionsVtt(finalResult.captionsVtt);
+        setShowCaptions(true);
+      } else {
+        setLoadedCaptions(result.captions);
+        setLoadedCaptionsSrt(result.captionsSrt);
+        setLoadedCaptionsVtt(result.captionsVtt);
+        setShowCaptions(true);
+      }
     } catch (error: any) {
       console.error('Failed to load captions:', error);
       alert('Failed to load captions: ' + error.message);
-      setCaptionProgress(0);
     } finally {
       setLoadingCaptions(false);
       setOperationInProgress('none');
@@ -286,33 +289,27 @@ export function VideoPlayer({
     
     setOperationInProgress('dubbing');
     setLoadingDub(true);
-    setDubProgress(0);
     
     try {
-      // Simulate progress (since backend doesn't support streaming progress yet)
-      const progressInterval = setInterval(() => {
-        setDubProgress(prev => {
-          if (prev >= 90) return prev;
-          return prev + 5;
-        });
-      }, 1000);
-      
       const result = await dubVideo(documentId, 'female');
       
-      clearInterval(progressInterval);
-      setDubProgress(100);
-      
-      setLoadedDubbedUrl(result.dubbedVideoUrl);
-      setVideoMode('dubbed');
-      
-      // Reset progress after a moment
-      setTimeout(() => {
-        setDubProgress(0);
-      }, 1000);
+      if (result.queued && result.taskId) {
+        const finalResult = await new Promise<any>((resolve, reject) => {
+          setActiveTaskId(result.taskId);
+          setQueueTaskType('dubbing');
+          setDeferredResolve(() => resolve);
+          setDeferredReject(() => reject);
+        });
+        
+        setLoadedDubbedUrl(finalResult.dubbedVideoUrl);
+        setVideoMode('dubbed');
+      } else {
+        setLoadedDubbedUrl(result.dubbedVideoUrl);
+        setVideoMode('dubbed');
+      }
     } catch (error: any) {
       console.error('Failed to dub video:', error);
       alert('Failed to dub video: ' + error.message);
-      setDubProgress(0);
     } finally {
       setLoadingDub(false);
       setOperationInProgress('none');
@@ -505,19 +502,19 @@ export function VideoPlayer({
   }
 
   return (
-    <Card className="bg-white border-2 border-gray-400 shadow-sm">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
+    <Card className="bg-white border-2 border-gray-400 shadow-sm w-full">
+      <CardHeader className="pb-3 px-3 sm:px-6">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           <div>
-            <CardTitle className="text-lg">{title || 'Video Player'}</CardTitle>
+            <CardTitle className="text-base sm:text-lg">{title || 'Video Player'}</CardTitle>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 items-center">
             {originalVideoUrl && (
               <Button
                 variant={videoMode === 'original' ? 'default' : 'outline'}
                 size="sm"
                 onClick={() => setVideoMode('original')}
-                className="text-xs"
+                className="text-xs h-8 px-3"
               >
                 Original
               </Button>
@@ -529,7 +526,7 @@ export function VideoPlayer({
                   size="sm"
                   onClick={handleLoadDub}
                   disabled={loadingDub || (operationInProgress !== 'none' && operationInProgress !== 'dubbing')}
-                  className="text-xs"
+                  className="text-xs h-8 px-3"
                 >
                   {loadingDub ? (
                     <>
@@ -555,7 +552,7 @@ export function VideoPlayer({
                   size="sm"
                   onClick={handleLoadCaptions}
                   disabled={loadingCaptions || (operationInProgress !== 'none' && operationInProgress !== 'captions')}
-                  className="text-xs"
+                  className="text-xs h-8 px-3"
                 >
                   {loadingCaptions ? (
                     <>
@@ -580,79 +577,22 @@ export function VideoPlayer({
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3 pt-0">
+      <CardContent className="space-y-3 pt-0 px-3 sm:px-6">
         {/* Video Player */}
         <div 
-          className="relative w-full bg-black rounded-lg overflow-hidden cursor-pointer" 
-          style={{ maxHeight: '400px' }}
+          className="relative w-full bg-black rounded-lg overflow-hidden cursor-pointer aspect-video flex items-center justify-center" 
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
           onClick={handlePlayerClick}
         >
           {isLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
-              <div className="text-white text-center">
-                <motion.div
-                  animate={{ 
-                    scale: [1, 1.1, 1],
-                    opacity: [0.8, 1, 0.8],
-                  }}
-                  transition={{ 
-                    duration: 1.5,
-                    repeat: Infinity,
-                    ease: "easeInOut"
-                  }}
-                  className="relative mb-4"
-                >
-                  {/* Pulsing background rings */}
-                  <motion.div
-                    className="absolute inset-0 rounded-2xl bg-white opacity-20"
-                    animate={{
-                      scale: [1, 1.3, 1],
-                      opacity: [0.2, 0, 0.2],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeOut"
-                    }}
-                  />
-                  <motion.div
-                    className="absolute inset-0 rounded-2xl bg-white opacity-15"
-                    animate={{
-                      scale: [1, 1.5, 1],
-                      opacity: [0.15, 0, 0.15],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeOut",
-                      delay: 0.3
-                    }}
-                  />
-                  {/* Logo */}
-                  <motion.div
-                    className="relative w-12 h-12 flex items-center justify-center"
-                    animate={{
-                      y: [0, -6, 0],
-                    }}
-                    transition={{
-                      duration: 2,
-                      repeat: Infinity,
-                      ease: "easeInOut"
-                    }}
-                  >
-                    <Image
-                      src="/logo.svg"
-                      alt="Loading"
-                      width={48}
-                      height={48}
-                      className="w-full h-full object-contain"
-                      priority
-                    />
-                  </motion.div>
-                </motion.div>
-                <p>Loading video...</p>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-xs z-10">
+              <div className="text-white text-center flex flex-col items-center justify-center">
+                <div className="relative w-12 h-12 mb-3">
+                  <div className="absolute inset-0 rounded-full border-4 border-white/20" />
+                  <div className="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin" />
+                </div>
+                <p className="text-sm font-semibold tracking-wider text-slate-200 animate-pulse">Loading video...</p>
               </div>
             </div>
           )}
@@ -690,7 +630,7 @@ export function VideoPlayer({
           >
             Your browser does not support the video tag.
           </video>
-
+ 
           {/* Custom Caption Overlay */}
           {showCaptions && currentCaption && (
             <div 
@@ -710,7 +650,7 @@ export function VideoPlayer({
               </div>
             </div>
           )}
-
+ 
           {/* Custom Controls Overlay */}
           {showControls && (!isPlaying || isHovered) && (
             <div 
@@ -727,7 +667,7 @@ export function VideoPlayer({
                   style={{ width: `${(currentTime / duration) * 100}%` }}
                 />
               </div>
-
+ 
               {/* Controls */}
               <div className="flex items-center gap-4">
                 <Button
@@ -742,7 +682,7 @@ export function VideoPlayer({
                     <Play className="h-5 w-5" />
                   )}
                 </Button>
-
+ 
                 <div className="flex items-center gap-2 flex-1">
                   <span className="text-white text-sm">
                     {formatTime(currentTime)}
@@ -752,7 +692,7 @@ export function VideoPlayer({
                     {formatTime(duration)}
                   </span>
                 </div>
-
+ 
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
@@ -776,7 +716,7 @@ export function VideoPlayer({
                     className="w-20 hidden sm:block"
                   />
                 </div>
-
+ 
                 <Button
                   variant="ghost"
                   size="icon"
@@ -793,8 +733,24 @@ export function VideoPlayer({
             </div>
           )}
         </div>
-
       </CardContent>
+      {activeTaskId && (
+        <QueueProgressOverlay
+          taskId={activeTaskId}
+          taskType={queueTaskType}
+          onComplete={(res) => {
+            setActiveTaskId(null);
+            if (deferredResolve) deferredResolve(res);
+          }}
+          onCancel={() => {
+            setActiveTaskId(null);
+            setLoadingDub(false);
+            setLoadingCaptions(false);
+            setOperationInProgress('none');
+            if (deferredReject) deferredReject(new Error("Request was cancelled."));
+          }}
+        />
+      )}
     </Card>
   );
 }

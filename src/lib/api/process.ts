@@ -86,3 +86,25 @@ export async function translateText(text: string, targetLanguage = 'Urdu', docum
   });
   return handleResponse(response);
 }
+
+export async function getQueueStatus(taskId: string): Promise<{
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  position: number;
+  total_queued: number;
+  result?: any;
+  error?: string;
+}> {
+  const response = await fetch(`${getApiUrl()}/api/process/queue/status/${taskId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
+
+export async function cancelQueueTask(taskId: string): Promise<{ success: boolean }> {
+  const response = await fetch(`${getApiUrl()}/api/process/queue/cancel/${taskId}`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse(response);
+}
