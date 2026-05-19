@@ -105,14 +105,14 @@ export function QueueProgressOverlay({
 
   const getTaskName = () => {
     switch (taskType) {
-      case 'video': return 'Offline Video Transcription & Analytics';
-      case 'document': return 'Offline Document Context Extraction';
-      case 'url': return 'Offline URL Scraper & Video Downloader';
+      case 'video': return 'Video Transcription & Analytics';
+      case 'document': return 'Document Context Extraction';
+      case 'url': return 'URL Scraper & Video Downloader';
       case 'all_features': return 'Generating Summaries, Keywords & Notes';
       case 'summary': return 'Generating AI Summary';
       case 'notes': return 'Generating Interactive Study Notes';
       case 'captions': return 'Generating Speech-synchronized Urdu Captions';
-      case 'translation': return 'Offline Urdu Neural Translation';
+      case 'translation': return 'Urdu Neural Translation';
       case 'dubbing': return 'Synchronized Voice Dubbing Engine';
       default: return taskType;
     }
@@ -167,7 +167,7 @@ export function QueueProgressOverlay({
               </div>
               <p className="text-xs text-slate-400 mt-2">
                 {position === 1 
-                  ? "You are next! Standing by to initialize offline AI models..." 
+                  ? "You are next! Standing by to initialize AI models..." 
                   : `Waiting for ${position - 1} task(s) ahead to finish...`}
               </p>
             </>
@@ -184,7 +184,7 @@ export function QueueProgressOverlay({
                 Processing Active{dots}
               </span>
               <p className="text-xs text-slate-400 max-w-sm px-4 leading-relaxed">
-                Server has claimed your task! Powering offline neural models (Whisper, BART Summarizer, and Opus Neural Dubber).
+                Server has claimed your task! Powering AI neural models (Whisper, BART Summarizer, and Opus Neural Dubber).
               </p>
             </>
           ) : status === 'failed' ? (
@@ -209,7 +209,7 @@ export function QueueProgressOverlay({
           <div>
             <h4 className="text-xs font-bold text-amber-400">Page Navigation Lock Active</h4>
             <p className="text-[10px] text-amber-200/80 leading-relaxed mt-0.5">
-              Please do not navigate away, reload, or close this tab. Leaving the screen will automatically cancel your task to free up offline AI resources for other users.
+              Please do not navigate away, reload, or close this tab. Leaving the screen will automatically cancel your task to free up AI resources for other users.
             </p>
           </div>
         </div>

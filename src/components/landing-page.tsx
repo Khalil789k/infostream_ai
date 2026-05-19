@@ -108,9 +108,9 @@ export function LandingPage({ onGetStarted, onLogin }: LandingPageProps) {
         <div className="max-w-7xl mx-auto mt-10 pt-6 border-t border-white/5 flex flex-col md:flex-row justify-between items-center text-xs text-white/40">
           <p>© 2026 Info Stream AI. All rights reserved.</p>
           <div className="flex space-x-4 mt-3 md:mt-0">
-            <span>Runs Locally</span>
+            <span>High Performance</span>
             <span>&bull;</span>
-            <span>Offline Processing</span>
+            <span>Secure Processing</span>
           </div>
         </div>
       </footer>

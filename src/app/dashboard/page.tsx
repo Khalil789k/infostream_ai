@@ -229,7 +229,7 @@ export default function DashboardHome() {
           className="mt-8 sm:mt-12 md:mt-16 w-full"
         >
           <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:items-stretch w-full">
-            {/* Pakistan Sign Language Card (Service Temporarily Offline) */}
+            {/* Pakistan Sign Language Card (Service Temporarily Unavailable) */}
             <div 
               className="bg-gradient-to-br from-slate-700 via-slate-800 to-slate-900 rounded-2xl border-2 border-slate-600 shadow-2xl w-full lg:flex-[2] lg:max-w-2xl min-h-[300px] p-6 sm:p-8 md:p-10 cursor-not-allowed group relative overflow-hidden flex flex-col justify-between transition-all duration-500"
             >
@@ -251,13 +251,13 @@ export default function DashboardHome() {
                   Pakistan Sign <br /> Language Interpreter
                 </h2>
                 <p className="text-slate-400 text-sm sm:text-base md:text-lg leading-relaxed max-w-md font-medium">
-                  The PSL Interpreter service is temporarily offline for backend maintenance and avatar updates. We apologize for the inconvenience.
+                  The PSL Interpreter service is temporarily unavailable for backend maintenance and avatar updates. We apologize for the inconvenience.
                 </p>
               </div>
 
               <div className="relative z-10 mt-8 flex items-center justify-between">
                 <div className="flex items-center gap-2 px-4 py-2 bg-slate-800/80 text-slate-500 rounded-xl font-black text-sm border border-slate-700">
-                  TEMPORARILY OFFLINE
+                  TEMPORARILY UNAVAILABLE
                 </div>
               </div>
             </div>
