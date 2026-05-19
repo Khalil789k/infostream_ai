@@ -66,7 +66,13 @@ export function QueueProgressOverlay({
     };
   }, [taskId, onComplete, onCancel]);
 
-  // Page Exit Prevention (beforeunload)
+  // Keep status in ref so unmount cleanup reads the latest value without re-triggering the effect on every status transition
+  const statusRef = React.useRef(status);
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
+  // Page Exit Prevention (beforeunload) and actual component unmount auto-cancellation
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
@@ -86,12 +92,12 @@ export function QueueProgressOverlay({
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       
-      // Auto-cancel request on unmount if it's still running/queued
-      if (status === 'queued' || status === 'processing') {
+      // Auto-cancel request on actual component unmount if it's still running/queued
+      if (statusRef.current === 'queued' || statusRef.current === 'processing') {
         cancelQueueTask(taskId).catch(console.error);
       }
     };
-  }, [taskId, status]);
+  }, [taskId]);
 
   const handleCancelClick = async () => {
     try {
