@@ -98,8 +98,15 @@ class ModelLoader:
             if os.path.exists(local_path) and os.path.isdir(local_path) and os.path.exists(os.path.join(local_path, 'config.json')):
                 logger.info(f"Loading local summarization model from {local_path}...")
                 try:
+                    import gc
+                    gc.collect()
                     tokenizer = AutoTokenizer.from_pretrained(local_path, local_files_only=True)
-                    model = AutoModelForSeq2SeqLM.from_pretrained(local_path, local_files_only=True)
+                    model = AutoModelForSeq2SeqLM.from_pretrained(
+                        local_path, 
+                        local_files_only=True,
+                        low_cpu_mem_usage=True,
+                        torch_dtype=torch.float32
+                    )
                     
                     self._models['summarization'] = {
                         'tokenizer': tokenizer,

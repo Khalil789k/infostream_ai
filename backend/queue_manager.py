@@ -108,6 +108,16 @@ class ProcessingQueueManager:
             task['status'] = 'cancelled'
             task['completed_at'] = time.time()
             logger.info(f"Task {task_id} was marked as CANCELLED.")
+            
+            # Physically remove the task_id from the underlying queue deque if present
+            try:
+                with self.task_queue.mutex:
+                    if task_id in self.task_queue.queue:
+                        self.task_queue.queue.remove(task_id)
+                        logger.info(f"Task {task_id} successfully removed from the task queue.")
+            except Exception as e:
+                logger.error(f"Error removing task from queue list: {e}")
+                
             return True
         return False
 
