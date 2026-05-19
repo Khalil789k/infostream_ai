@@ -147,50 +147,40 @@ export function QueueProgressOverlay({
 
         {/* Dynamic State Display */}
         <div className="z-10 w-full bg-slate-950/60 border border-slate-800 rounded-xl p-6 mb-6 flex flex-col items-center relative">
-          {status === 'queued' ? (
+          {status === 'queued' || status === 'processing' ? (
             <>
               {/* Queue Circle Animation */}
               <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
                 <div className="absolute inset-0 rounded-full border-4 border-slate-800" />
-                <div className="absolute inset-0 rounded-full border-4 border-violet-500 border-t-transparent animate-spin" />
+                <div className={`absolute inset-0 rounded-full border-4 border-t-transparent animate-spin ${status === 'processing' ? 'border-emerald-400' : 'border-violet-500'}`} />
                 <div className="flex flex-col items-center justify-center">
-                  <span className="text-3xl font-extrabold text-white">#{position}</span>
-                  <span className="text-[10px] text-slate-400 uppercase tracking-widest">In Queue</span>
+                  <span className="text-2xl font-extrabold text-white">
+                    {status === 'processing' ? "Active" : `#${position}`}
+                  </span>
+                  <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">
+                    {status === 'processing' ? "Processing" : "In Queue"}
+                  </span>
                 </div>
               </div>
 
               <div className="w-full flex items-center justify-between text-sm text-slate-400 px-2">
                 <span>Active Server Worker</span>
-                <span className="text-violet-400 font-semibold flex items-center space-x-1 animate-pulse">
-                  <span>Occupied</span>
+                <span className={`font-bold flex items-center space-x-1 animate-pulse ${status === 'processing' ? 'text-emerald-400' : 'text-violet-400'}`}>
+                  <span>{status === 'processing' ? "Executing Task" : "Occupied"}</span>
                 </span>
               </div>
               <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-3 mb-2">
                 <div 
-                  className="bg-violet-500 h-full rounded-full transition-all duration-500" 
-                  style={{ width: `${Math.max(10, Math.min(100, 100 - (position - 1) * 20))}%` }}
+                  className={`h-full rounded-full transition-all duration-500 ${status === 'processing' ? 'bg-emerald-500 w-full' : 'bg-violet-500'}`} 
+                  style={status === 'processing' ? {} : { width: `${Math.max(10, Math.min(100, 100 - (position - 1) * 20))}%` }}
                 />
               </div>
-              <p className="text-xs text-slate-400 mt-2">
-                {position === 1 
-                  ? "You are next! Standing by to initialize AI models..." 
-                  : `Waiting for ${position - 1} task(s) ahead to finish...`}
-              </p>
-            </>
-          ) : status === 'processing' ? (
-            <>
-              {/* Neural Pulse Processing Animation */}
-              <div className="relative w-24 h-24 mb-6 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full bg-violet-500/10 border-2 border-violet-500/30 animate-ping duration-[3s]" />
-                <div className="absolute inset-2 rounded-full bg-indigo-500/20 border border-indigo-500/50 animate-pulse" />
-                <Loader2 className="w-12 h-12 text-violet-400 animate-spin relative" />
-              </div>
-
-              <span className="text-lg font-bold text-violet-300 animate-pulse mb-1">
-                Processing Active{dots}
-              </span>
-              <p className="text-xs text-slate-400 max-w-sm px-4 leading-relaxed">
-                Server has claimed your task! Powering AI neural models (Whisper, BART Summarizer, and Opus Neural Dubber).
+              <p className="text-xs text-slate-400 mt-2 px-2">
+                {status === 'processing' 
+                  ? "Server has claimed your task! Powering AI neural models (Whisper, BART Summarizer, and Opus Neural Dubber)..." 
+                  : position === 1 
+                    ? "You are next! Standing by to initialize AI models..." 
+                    : `Waiting for ${position - 1} task(s) ahead to finish...`}
               </p>
             </>
           ) : status === 'failed' ? (
