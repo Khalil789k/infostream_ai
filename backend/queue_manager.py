@@ -40,6 +40,9 @@ class ProcessingQueueManager:
             logger.info("Processing queue worker thread started.")
 
     def add_task(self, user_id, task_type, target_fn, *args, **kwargs):
+        from flask import current_app
+        self.start_worker(current_app._get_current_object())
+        
         task_id = str(uuid.uuid4())
         task_info = {
             'id': task_id,
@@ -62,6 +65,9 @@ class ProcessingQueueManager:
         return task_id
 
     def get_task_status(self, task_id):
+        from flask import current_app
+        self.start_worker(current_app._get_current_object())
+        
         # Update heartbeat when client polls
         task = self.tasks.get(task_id)
         if not task:
@@ -91,6 +97,9 @@ class ProcessingQueueManager:
         }
 
     def cancel_task(self, task_id):
+        from flask import current_app
+        self.start_worker(current_app._get_current_object())
+        
         task = self.tasks.get(task_id)
         if not task:
             return False
@@ -102,7 +111,7 @@ class ProcessingQueueManager:
             return True
         return False
 
-    def check_heartbeats(self, timeout=8.0):
+    def check_heartbeats(self, timeout=25.0):
         """Cancel tasks whose clients stopped polling."""
         now = time.time()
         for task_id, task in list(self.tasks.items()):
@@ -131,7 +140,7 @@ class ProcessingQueueManager:
                         continue
                     
                     # Double-check heartbeat before executing
-                    if time.time() - task['last_heartbeat'] > 8.0:
+                    if time.time() - task['last_heartbeat'] > 25.0:
                         task['status'] = 'cancelled'
                         self.task_queue.task_done()
                         continue
