@@ -16,6 +16,7 @@ import {
   processDocumentAll 
 } from "@/lib/api";
 import { Progress } from "./ui/progress";
+import { QueueProgressOverlay } from "./QueueProgressOverlay";
 
 import { SummaryCard } from "./results/summary-card";
 import { NotesCard } from "./results/notes-card";
@@ -35,6 +36,10 @@ export function ResultsView({ content, onNewSession }: ResultsViewProps) {
   const [globalProgress, setGlobalProgress] = useState(0);
   const [activeTask, setActiveTask] = useState<string | null>(null);
   const [videoOperation, setVideoOperation] = useState<'none' | 'dubbing' | 'captions'>('none');
+  const [activeQueueTaskId, setActiveQueueTaskId] = useState<string | null>(null);
+  const [queueTaskType, setQueueTaskType] = useState<string>('summary');
+  const [deferredResolve, setDeferredResolve] = useState<((value: any) => void) | null>(null);
+  const [deferredReject, setDeferredReject] = useState<((reason?: any) => void) | null>(null);
 
   const isAnyTaskProcessing = Object.values(processingStates).some(state => state) || videoOperation !== 'none';
 
@@ -77,6 +82,17 @@ export function ResultsView({ content, onNewSession }: ResultsViewProps) {
         case 'keywords': result = await processDocumentKeywords(content.id); break;
         case 'notes': result = await processDocumentNotes(content.id); break;
         case 'all': result = await processDocumentAll(content.id); break;
+      }
+      
+      // If the backend returns a queued task, wait for it!
+      if (result && result.queued && result.taskId) {
+        const finalResult = await new Promise<any>((resolve, reject) => {
+          setActiveQueueTaskId(result.taskId);
+          setQueueTaskType(type === 'all' ? 'all_features' : type);
+          setDeferredResolve(() => resolve);
+          setDeferredReject(() => reject);
+        });
+        result = finalResult;
       }
       
       setGlobalProgress(100);
@@ -338,6 +354,20 @@ export function ResultsView({ content, onNewSession }: ResultsViewProps) {
           </AnimatePresence>
         </div>
       </div>
+      {activeQueueTaskId && (
+        <QueueProgressOverlay
+          taskId={activeQueueTaskId}
+          taskType={queueTaskType}
+          onComplete={(res) => {
+            setActiveQueueTaskId(null);
+            if (deferredResolve) deferredResolve(res);
+          }}
+          onCancel={() => {
+            setActiveQueueTaskId(null);
+            if (deferredReject) deferredReject(new Error("Request was cancelled."));
+          }}
+        />
+      )}
     </div>
   );
 }
