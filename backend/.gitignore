@@ -33,6 +33,7 @@ ai_models/*
 /tmp/infostream_*
 infostream_uploads/
 infostream_videos/
+download_models.py
 
 # OS
 .DS_Store
