@@ -175,8 +175,6 @@ def dub_video(document_id):
         logger.error(f"Error queuing dubbing: {e}")
         return jsonify({'error': str(e)}), 500
 
-@video_bp.route('/api/video/<document_id>/captions', methods=['GET'])
-@jwt_required()
 def run_get_video_captions(user_id, document_id):
     from models import db, ProcessedDocument
     from api.services import video_processor, caption_generator
