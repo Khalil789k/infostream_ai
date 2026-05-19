@@ -49,4 +49,4 @@ deploy_to_hf.sh
 test_video/
 *.db
 *.log
-backend/
+scratch/

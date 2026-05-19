@@ -1,0 +1,7 @@
+# Ignore backend from Vercel deployment
+backend/
+scratch/
+test_video/
+deploy_to_hf.sh
+*.db
+*.log
