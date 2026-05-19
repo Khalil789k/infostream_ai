@@ -101,12 +101,7 @@ class ModelLoader:
                     import gc
                     gc.collect()
                     tokenizer = AutoTokenizer.from_pretrained(local_path, local_files_only=True)
-                    model = AutoModelForSeq2SeqLM.from_pretrained(
-                        local_path, 
-                        local_files_only=True,
-                        low_cpu_mem_usage=True,
-                        torch_dtype=torch.float32
-                    )
+                    model = AutoModelForSeq2SeqLM.from_pretrained(local_path, local_files_only=True)
                     
                     self._models['summarization'] = {
                         'tokenizer': tokenizer,
