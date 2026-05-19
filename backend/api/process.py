@@ -300,6 +300,92 @@ def process_text():
         logger.error(f"Error saving text: {e}")
         return jsonify({'error': str(e)}), 500
 
+@process_bp.route('/api/process/document', methods=['POST'])
+@jwt_required()
+def process_document():
+    """Queue processing of uploaded document (PDF or DOCX)."""
+    try:
+        user_id = get_jwt_identity()
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '' or not allowed_file(file.filename):
+            return jsonify({'error': 'Invalid file'}), 400
+        
+        file_bytes = file.read()
+        filename = secure_filename(file.filename)
+        
+        from queue_manager import ProcessingQueueManager
+        task_id = ProcessingQueueManager().add_task(
+            user_id, 'document', run_process_document, user_id, file_bytes, filename
+        )
+        
+        return jsonify({
+            'success': True,
+            'queued': True,
+            'taskId': task_id
+        }), 202
+    except Exception as e:
+        logger.error(f"Error queuing document: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@process_bp.route('/api/process/video', methods=['POST'])
+@jwt_required()
+def process_video():
+    """Queue processing of uploaded video file."""
+    try:
+        user_id = get_jwt_identity()
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if file.filename == '' or not is_video_file(file.filename):
+            return jsonify({'error': 'Invalid video file'}), 400
+        
+        file_bytes = file.read()
+        filename = secure_filename(file.filename)
+        video_id = str(uuid.uuid4())
+        
+        from queue_manager import ProcessingQueueManager
+        task_id = ProcessingQueueManager().add_task(
+            user_id, 'video', run_process_video, user_id, file_bytes, filename, video_id
+        )
+        
+        return jsonify({
+            'success': True,
+            'queued': True,
+            'taskId': task_id
+        }), 202
+    except Exception as e:
+        logger.error(f"Error queuing video: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@process_bp.route('/api/process/url', methods=['POST'])
+@jwt_required()
+def process_url():
+    """Queue processing of web or video URL."""
+    try:
+        user_id = get_jwt_identity()
+        data = request.get_json()
+        url = data.get('url')
+        if not url:
+            return jsonify({'error': 'URL is required'}), 400
+        
+        from queue_manager import ProcessingQueueManager
+        task_id = ProcessingQueueManager().add_task(
+            user_id, 'url', run_process_url, user_id, url
+        )
+        
+        return jsonify({
+            'success': True,
+            'queued': True,
+            'taskId': task_id
+        }), 202
+    except Exception as e:
+        logger.error(f"Error queuing URL: {e}")
+        return jsonify({'error': str(e)}), 500
+
 @process_bp.route('/api/documents/<document_id>/process/summary', methods=['POST'])
 @jwt_required()
 def process_document_summary(document_id):
