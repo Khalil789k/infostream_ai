@@ -48,4 +48,4 @@ RUN mkdir -p /app/nltk_data /app/ai_models/cache && \
 EXPOSE 7860
 
 # Run with Gunicorn, preloading the app in the master process to avoid race conditions
-CMD ["gunicorn", "--preload", "--workers", "2", "--threads", "2", "--bind", "0.0.0.0:7860", "--timeout", "600", "app:app"]
+CMD ["gunicorn", "--preload", "--workers", "1", "--threads", "4", "--bind", "0.0.0.0:7860", "--timeout", "600", "app:app"]
